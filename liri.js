@@ -1,16 +1,39 @@
 require("dotenv").config();
 
-var axios = require("axios");
-var Spotify = require("node-spotify-api");
-var moment = require("moment");
-var keys = require("./keys.js");
-var spotify = new Spotify(keys.spotify);
+const axios = require("axios");
+const Spotify = require("node-spotify-api");
+const moment = require("moment");
+const keys = require("./keys.js");
+const fs = require("fs");
+const spotify = new Spotify(keys.spotify);
 
-const command = process.argv[2];
-const arg = process.argv[3];
+var command = process.argv[2];
+var arg = process.argv.slice(3).join(" ");
 
 switch (command) {
 	case "concert-this":
+		concertSearch(arg);
+		break;
+	case "spotify-this-song":
+		spotifySearch(arg);
+		break;
+	case "movie-this":
+		movieSearch(arg)
+		break;
+	case "do-what-it-says":
+		fs.readFile("random.txt", "utf8", function(error, data) {
+			if (error) {
+				throw error;
+			}
+			dataArr = data.split(',')
+			if (dataArr[0] == 'spotify-this-song') {
+				spotifySearch(dataArr[1]);
+			}
+		});
+}
+
+function concertSearch(arg) {
+	if (arg) {
 		axios
 			.get(
 				"https://rest.bandsintown.com/artists/" +
@@ -18,39 +41,107 @@ switch (command) {
 					"/events?app_id=codingbootcamp"
 			)
 			.then(function(response) {
-				console.log("Venue Name: " + response.data[0].venue.name);
-				console.log(
+				var concertData = [
+					"Venue Name: " + response.data[0].venue.name,
 					"Venue Location: " +
 						response.data[0].venue.city +
 						", " +
 						response.data[0].venue.region +
 						", " +
-						response.data[0].venue.country
-				);
-				console.log(
-					"Date: " + moment(response.data[0].datetime).format("MM/DD/YYYY")
-				);
+						response.data[0].venue.country,
+					"Date: " + moment(response.data[0].datetime).format("MM/DD/YYYY"),
+				].join("\n\n");
+				console.log(concertData);
+				addToLog(concertData)
 			});
-		break;
-	case "spotify-this-song" + arg:
-		spotify.search({ type: "track", query: arg }, function(error, data) {
-			if (error) {
-				console.log(error);
+	} else {
+		console.log("Please enter an artist");
+	}
+}
+
+function spotifySearch(arg) {
+	if (arg) {
+		spotify.search({ type: "track", query: arg }, function(err, data) {
+			if (err) {
+				return console.log("Error occurred: " + err);
 			}
-			console.log("Artist(s): " + data.tracks.items[0].album.artists[0].name);
-			console.log("Song Name: " + data.tracks.items[0].name);
-			console.log("Album: " + data.tracks.items[0].album.name);
-			console.log("URL: " + data.tracks.items[0].album.external_urls.spotify);
+			var spotifyData = [
+				"Artists: " + data.tracks.items[0].artists[0].name,
+				"Song's name: " + data.tracks.items[0].name,
+				"Preview link: " + data.tracks.items[0].preview_url,
+				"Album: " + data.tracks.items[0].album.name,
+			].join("\n\n");
+			console.log(spotifyData);
+			addToLog(spotifyData)
 		});
-		break;
-	case "spotify-this-song":
-		spotify.search(
-			{ type: "track", query: "The Sign" },
-			function(err, data) {
-				if (err) {
-					return console.log("Error occurred: " + err);
-				}
-				console.log(data.tracks)
-			}
-		);
+	} else {
+		spotify.search({ type: "track", query: "Welcome Fort Minor" }, function(
+			error,
+			data
+		) {
+			if (error) throw error
+			var spotifyData = [
+				"Artists: " + data.tracks.items[0].artists[0].name,
+				"Song's name: " + data.tracks.items[0].name,
+				"Preview link: " + data.tracks.items[0].preview_url,
+				"Album: " + data.tracks.items[0].album.name,
+			].join("\n\n");
+			console.log(spotifyData);
+			addToLog(spotifyData)
+		});
+	}
+}
+
+function movieSearch(arg) {
+	var URL = "http://www.omdbapi.com/?apikey=trilogy&t=" + arg;
+	if (arg) {
+		axios
+			.get(URL)
+			.then(function(response) {
+				var movieData = [
+					"Movie Title: " + response.data.Title,
+					"Year: " + response.data.Year,
+					"IMDB Rating: " + response.data.Ratings[0].Value,
+					"Rotten Tomatoes Rating: " + response.data.Ratings[1].Value,
+					"Country: " + response.data.Country,
+					"Language: " + response.data.Language,
+					"Plot: " + response.data.Plot,
+					"Actors: " + response.data.Actors,
+				].join("\n\n");
+				console.log(movieData);
+				addToLog(movieData)
+			})
+			.catch(function(error) {
+				if (error) throw error;
+			});
+	} else {
+		axios
+			.get("http://www.omdbapi.com/?apikey=trilogy&t=Mr.+Nobody")
+			.then(function(response) {
+				var movieData = [
+					"Movie Title: " + response.data.Title,
+					"Year: " + response.data.Year,
+					"IMDB Rating: " + response.data.Ratings[0].Value,
+					"Rotten Tomatoes Rating: " + response.data.Ratings[1].Value,
+					"Country: " + response.data.Country,
+					"Language: " + response.data.Language,
+					"Plot: " + response.data.Plot,
+					"Actors: " + response.data.Actors,
+				].join("\n\n");
+				console.log(movieData);
+				addToLog(movieData)
+			})
+			.catch(function(error) {
+				if (error) throw error;
+			});
+	}
+}
+
+function addToLog(data) {
+	var divider =
+		"\n------------------------------------------------------------\n\n";
+
+	fs.appendFile("log.txt", data + divider, function(error) {
+		if (error) throw error;
+	});
 }
