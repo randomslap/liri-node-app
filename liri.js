@@ -18,18 +18,21 @@ switch (command) {
 		spotifySearch(arg);
 		break;
 	case "movie-this":
-		movieSearch(arg)
+		movieSearch(arg);
 		break;
 	case "do-what-it-says":
 		fs.readFile("random.txt", "utf8", function(error, data) {
 			if (error) {
 				throw error;
 			}
-			dataArr = data.split(',')
-			if (dataArr[0] == 'spotify-this-song') {
+			dataArr = data.split(",");
+			if (dataArr[0] == "spotify-this-song") {
 				spotifySearch(dataArr[1]);
 			}
 		});
+		break;
+	default:
+		console.log("Enter 'concert-this', 'spotify-this-song', 'movie-this', or 'do-what-it-says'");
 }
 
 function concertSearch(arg) {
@@ -52,7 +55,7 @@ function concertSearch(arg) {
 					"Date: " + moment(response.data[0].datetime).format("MM/DD/YYYY"),
 				].join("\n\n");
 				console.log(concertData);
-				addToLog(concertData)
+				addToLog(concertData);
 			});
 	} else {
 		console.log("Please enter an artist");
@@ -72,14 +75,14 @@ function spotifySearch(arg) {
 				"Album: " + data.tracks.items[0].album.name,
 			].join("\n\n");
 			console.log(spotifyData);
-			addToLog(spotifyData)
+			addToLog(spotifyData);
 		});
 	} else {
 		spotify.search({ type: "track", query: "Welcome Fort Minor" }, function(
 			error,
 			data
 		) {
-			if (error) throw error
+			if (error) throw error;
 			var spotifyData = [
 				"Artists: " + data.tracks.items[0].artists[0].name,
 				"Song's name: " + data.tracks.items[0].name,
@@ -87,7 +90,7 @@ function spotifySearch(arg) {
 				"Album: " + data.tracks.items[0].album.name,
 			].join("\n\n");
 			console.log(spotifyData);
-			addToLog(spotifyData)
+			addToLog(spotifyData);
 		});
 	}
 }
@@ -109,7 +112,7 @@ function movieSearch(arg) {
 					"Actors: " + response.data.Actors,
 				].join("\n\n");
 				console.log(movieData);
-				addToLog(movieData)
+				addToLog(movieData);
 			})
 			.catch(function(error) {
 				if (error) throw error;
@@ -129,7 +132,7 @@ function movieSearch(arg) {
 					"Actors: " + response.data.Actors,
 				].join("\n\n");
 				console.log(movieData);
-				addToLog(movieData)
+				addToLog(movieData);
 			})
 			.catch(function(error) {
 				if (error) throw error;
